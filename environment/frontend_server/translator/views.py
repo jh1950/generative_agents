@@ -3,22 +3,33 @@ Author: Joon Sung Park (joonspk@stanford.edu)
 File: views.py
 """
 import os
-import string
-import random
 import json
-from os import listdir
-import os
-
 import datetime
-from django.shortcuts import render, redirect, HttpResponseRedirect
+from django.shortcuts import render
 from django.http import HttpResponse, JsonResponse
-from global_methods import *
 
-from django.contrib.staticfiles.templatetags.staticfiles import static
-from .models import *
+from global_methods import check_if_file_exists, find_filenames
+
 
 def landing(request): 
-  context = {}
+  context = {
+    "demo": sorted(os.listdir("compressed_storage")),
+    "replay": sorted(os.listdir("storage")),
+  }
+  metaPath = {
+    "demo": "compressed_storage/%s/meta.json",
+    "replay": "storage/%s/reverie/meta.json",
+  }
+
+  for key, sim_codes in context.items():
+    for i in range(len(sim_codes)):
+      sim_code = sim_codes[i]
+      try:
+        with open(f"{metaPath[key] % sim_code}") as f:
+          max_step = int(json.load(f)["step"])
+      except:
+        max_step = 0
+      context[key][i] = [sim_code, max_step-1]
   template = "landing/landing.html"
   return render(request, template, context)
 
@@ -312,12 +323,3 @@ def path_tester_update(request):
     outfile.write(json.dumps(camera, indent=2))
 
   return HttpResponse("received")
-
-
-
-
-
-
-
-
-

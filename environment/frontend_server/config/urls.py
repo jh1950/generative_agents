@@ -13,11 +13,8 @@ Including another URLconf
     1. Import the include() function: from django.urls import include, path
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
-from django.conf.urls import include, url
-from django.urls import path
-from django.contrib import admin
-from django.conf import settings
-from django.conf.urls.static import static
+
+from django.conf.urls import url
 
 from translator import views as translator_views
 
@@ -31,5 +28,4 @@ urlpatterns = [
     url(r'^update_environment/$', translator_views.update_environment, name='update_environment'),
     url(r'^path_tester/$', translator_views.path_tester, name='path_tester'),
     url(r'^path_tester_update/$', translator_views.path_tester_update, name='path_tester_update'),
-    path('admin/', admin.site.urls),
 ]

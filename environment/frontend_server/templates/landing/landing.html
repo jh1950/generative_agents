@@ -2,9 +2,103 @@
 {% load staticfiles %}
 
 {% block content %}
-<div style="padding:2em">
-<img src="{% static 'img/atlas.png' %}">
-Your environment server is up and running! 
-</div>
-{% endblock content %}
 
+<div style="display: flex; justify-content: center; align-items: center; gap: 1rem; padding: 2rem;">
+	<img src="{% static 'img/atlas.png' %}"/>
+	<span>Your environment server is up and running!</span>
+</div>
+
+<form id="form" style="margin: auto; padding: .5rem; max-width: 750px; display: flex; flex-direction: column; gap: .5rem;">
+	<div style="display: flex; justify-content: space-between;">
+		<div>
+			<label><input type="radio" name="sim_type" onchange="radioChange();" value="demo"/>Demo</label>
+			<label><input type="radio" name="sim_type" onchange="radioChange();" value="replay"/>Replay</label>
+		</div>
+		<button type="submit">Submit</button>
+	</div>
+	<div style="display: flex; flex-wrap: wrap; gap: .5rem;">
+		<select id="demo" name="sim_code" style="flex: 1;" onchange="selectChange(this);" hidden>
+			<option value="" hidden>Simulation Name (Demo)</option>
+			{% for sim_code, max_step in demo %}
+				<option value="{{ sim_code }}" max_step="{{ max_step}}">{{ sim_code }}</option>
+			{% endfor %}
+		</select>
+		<select id="replay" name="sim_code" style="flex: 1;" onchange="selectChange(this);" hidden>
+			<option value="" hidden>Simulation Name (Replay)</option>
+			{% for sim_code, max_step in replay %}
+				<option value="{{ sim_code }}" max_step="{{ max_step}}">{{ sim_code }}</option>
+			{% endfor %}
+		</select>
+		<input id="max_step" name="max_step" max="0" oninput="inputChange(this);" hidden/>
+		<input style="text-align: center;" id="speed" name="speed" min="1" max="6" placeholder="1~6" title="Speed" size="3" oninput="inputChange(this);" hidden/>
+	</div>
+</form>
+<script type="text/javascript">
+	const [form, step, speed] = document.querySelectorAll("#form, #max_step, #speed");
+
+	const radioChange = function() {
+		for (let select of form.sim_code) {
+			if (select.id == form.sim_type.value) {
+				select.removeAttribute("hidden");
+			} else {
+				select.setAttribute("hidden", "");
+				select.options[0].selected = true;
+				step.setAttribute("hidden", "");
+				speed.setAttribute("hidden", "");
+			}
+		}
+	}
+
+	const selectChange = function(select) {
+		let max_step = select.selectedOptions[0].getAttribute("max_step");
+		if (max_step < 1) {
+			step.setAttribute("hidden", "");
+		} else {
+			step.removeAttribute("hidden");
+			step.placeholder = `Step to start (0~${max_step})`;
+			step.setAttribute("max", max_step);
+			if (max_step*1 < step.value*1) step.value = max_step;
+
+			if (form.sim_type.value == "demo") {
+				speed.removeAttribute("hidden");
+			} else {
+				speed.setAttribute("hidden", "");
+			}
+
+			step.focus();
+		}
+	}
+
+	const inputChange = function(input) {
+		const max_step = input.getAttribute("max")*1;
+		const value = input.value.replace(/[^0-9]/g, "");
+		input.value = value && max_step < value*1 ? max_step : value;
+	}
+
+	form.addEventListener("submit", function(e) {
+		e.preventDefault();
+		const sim_type = this.sim_type.value;
+		if (!sim_type) return;
+
+		const select = form.querySelector("#" + sim_type);
+		const sim_code = select.value;
+		let max_step = this.max_step.value.trim();
+		let speed = this.speed.value.trim();
+
+		if (!sim_code || sim_code == select.options[0].value) {
+			return false;
+		} else if (step.hasAttribute("hidden")) {
+			max_step = 0;
+		}
+		console.log(2, select, sim_code, max_step);
+		if (sim_type == "demo") {
+			location.href = `/demo/${sim_code}/${max_step || 0}/${speed || 1}/`;
+		} else {
+			location.href = `/replay/${sim_code}/${max_step || 0}/`;
+		}
+	});
+</script>
+
+<hr/>
+
+{% endblock content %}
