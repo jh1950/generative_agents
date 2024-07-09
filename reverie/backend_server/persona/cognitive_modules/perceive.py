@@ -4,6 +4,7 @@ Author: Joon Sung Park (joonspk@stanford.edu)
 File: perceive.py
 Description: This defines the "Perceive" module for generative agents. 
 """
+import math
 import sys
 sys.path.append('../../')
 

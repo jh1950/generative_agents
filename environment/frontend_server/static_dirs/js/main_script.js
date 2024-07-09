@@ -3,12 +3,14 @@ let showDebug = false;
 const main = function({
 	mode="tester",
 	step=0,
-	sim_code="",
+	sim_code="untitle",
 	sec_per_step=10,
 	play_speed=32,
 	persona_init_pos="{}",
 	all_movement="{}",
 	start_datetime="",
+	maze_name="the_ville",
+	tile_width=32,
 	static="/static/",
 	path_tester_update="/",
 	update_environment="/",
@@ -81,7 +83,7 @@ const main = function({
 	// for (let key in persona_names) {
 	// 	spawn_tile_loc[key] = persona_names[key];
 	// }
-	persona_init_pos = JSON.parse(persona_init_pos);
+	if (typeof persona_init_pos === "string") persona_init_pos = JSON.parse(persona_init_pos);
 
 	let personas = {};
 	let pronunciatios = {};
@@ -90,10 +92,10 @@ const main = function({
 	let pre_anims_direction;
 	let pre_anims_direction_dict = {};
 
-	curr_maze = "the_ville";
+	maze_name = maze_name+"";
 
 	// <tile_width> is the width of one individual tile (tiles are square)
-	tile_width = 32;
+	tile_width = tile_width*1;
 	// Important: tile_width % movement_speed has to be 0.
 	// <movement_speed> determines how fast we move at each upate cylce.
 	let movement_speed = play_speed*1;
@@ -111,7 +113,7 @@ const main = function({
 	let execute_count_max = tile_width / movement_speed;
 	let execute_count = execute_count_max;
 	let movement_target = {};
-	all_movement = JSON.parse(all_movement);
+	if (typeof all_movement === "string") all_movement = JSON.parse(all_movement);
 
 	let datetime_options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
 	if (start_datetime) {
@@ -312,13 +314,13 @@ const main = function({
 			if (!pointer.isDown) return;
 			if (pointer.button != 0) return;
 			const {x, y, downX, downY} = pointer;
-	
+
 			const move = {
 				x: (pointerPos.x || downX) - x,
 				y: (pointerPos.y || downY) - y,
 			};
 			player.body.setVelocity(move.x * 125, move.y * 125);
-	
+
 			pointerPos.x = x;
 			pointerPos.y = y;
 		});
@@ -438,7 +440,7 @@ const main = function({
 			// Only one of the three phases is incurred in each update cycle.
 			let data = {
 				"camera": {
-					"maze": curr_maze,
+					"maze": maze_name,
 					"x": player.body.position.x,
 					"y": player.body.position.y,
 				},
@@ -480,7 +482,7 @@ const main = function({
 					let persona_name_os = Object.keys(personas)[i];
 					let persona_name = persona_name_os.replace(/_/g, " ");
 					data["environment"][persona_name] = {
-						"maze": curr_maze,
+						"maze": maze_name,
 						"x": Math.ceil((personas[persona_name_os].body.position.x) / tile_width),
 						"y": Math.ceil((personas[persona_name_os].body.position.y) / tile_width),
 					}
@@ -557,7 +559,7 @@ const main = function({
 					let pronunciatio_content = p_movement["pronunciatio"];
 					let description_content = p_movement["description"];
 					let chat_content_raw = p_movement["chat"];
-			
+
 					// This is what gives the pronunciatio balloon the name initials. We
 					// use regex to extract the initials of the personas.
 					// E.g., "Dolores Murphy" -> "DM"
@@ -567,7 +569,7 @@ const main = function({
 						(initials.shift()?.[1] || '') + (initials.pop()?.[1] || '')
 					).toUpperCase();
 					pronunciatios[curr_persona_name_os].setText(initials + ": " + pronunciatio_content);
-			
+
 					let chat_content = "";
 					if (chat_content_raw != null) {
 						for (let j=0; j<chat_content_raw.length; j++) {
@@ -576,7 +578,7 @@ const main = function({
 					} else {
 						chat_content = "<em>None at the moment</em>"
 					}
-			
+
 					// Filling in the action description.
 					document.getElementById("quick_emoji-" + curr_persona_name_os).innerHTML = pronunciatio_content;
 					document.getElementById("current_action__" + curr_persona_name_os).innerHTML = description_content.split("@")[0];
@@ -664,12 +666,12 @@ const main = function({
 			} else {
 				anims_direction = "";
 			}
-	
+
 			curr_pronunciatio.x = curr_persona.body.x + 18;
 			curr_pronunciatio.y = curr_persona.body.y - 42 - 28;
 			curr_speech_bubble.x = curr_persona.body.x + 80;
 			curr_speech_bubble.y = curr_persona.body.y - 39;
-	
+
 			let left_walk_name = p_name_os + "-left-walk";
 			let right_walk_name = p_name_os + "-right-walk";
 			let down_walk_name = p_name_os + "-down-walk";
@@ -688,7 +690,7 @@ const main = function({
 		},
 		stop: function(curr_persona, p_name_os) {
 			curr_persona.anims.stop();
-	
+
 			// If we were moving, pick an idle frame to use
 			if (pre_anims_direction_dict[p_name_os] == "l") curr_persona.setTexture(p_name_os, "left"); else
 			if (pre_anims_direction_dict[p_name_os] == "r") curr_persona.setTexture(p_name_os, "right"); else

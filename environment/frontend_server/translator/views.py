@@ -13,25 +13,24 @@ from django.http import HttpResponse, JsonResponse
 from global_methods import check_if_file_exists, find_filenames
 
 
+maze_meta_file = "static_dirs/assets/%s/matrix/maze_meta_info.json"
+
+
 def landing(request):
     context = {
         "demo": sorted(os.listdir("compressed_storage")),
         "replay": sorted(os.listdir("storage")),
     }
-    metaPath = {
+    meta_files = {
         "demo": "compressed_storage/%s/meta.json",
         "replay": "storage/%s/reverie/meta.json",
     }
 
-    for key, sim_codes in context.items():
-        for i in range(len(sim_codes)):
-            sim_code = sim_codes[i]
-            try:
-                with open(f"{metaPath[key] % sim_code}") as f:
-                    max_step = int(json.load(f)["step"])
-            except:
-                max_step = 0
-            context[key][i] = [sim_code, max_step-1]
+    for mode, sim_codes in context.items():
+        for i, sim_code in enumerate(sim_codes):
+            with open(meta_files[mode] % sim_code) as f:
+                max_step = int(json.load(f)["step"])
+            context[mode][i] = [sim_code, max_step-1]
     template = "landing/landing.html"
     return render(request, template, context)
 
@@ -47,14 +46,16 @@ def demo(request, sim_code, step, play_speed="2"):
 
     # Loading the basic meta information about the simulation.
     meta = dict()
-    with open (meta_file) as json_file:
+    with open(meta_file) as json_file:
         meta = json.load(json_file)
 
+    maze_name = meta["maze_name"]
+    with open(maze_meta_file % maze_name) as json_file:
+        tile_width = int(json.load(json_file)["sq_tile_size"])
+
     sec_per_step = meta["sec_per_step"]
-    start_datetime = datetime.datetime.strptime(meta["start_date"] + " 00:00:00",
-                                                '%B %d, %Y %H:%M:%S')
-    for i in range(step):
-        start_datetime += datetime.timedelta(seconds=sec_per_step)
+    start_datetime = datetime.datetime.strptime(meta["start_date"] + " 00:00:00", '%B %d, %Y %H:%M:%S')
+    start_datetime += datetime.timedelta(seconds=step * sec_per_step)
     start_datetime = start_datetime.strftime("%Y-%m-%dT%H:%M:%S")
 
     # Loading the movement file
@@ -104,13 +105,11 @@ def demo(request, sim_code, step, play_speed="2"):
                "start_datetime": start_datetime,
                "sec_per_step": sec_per_step,
                "play_speed": play_speed,
+               "tile_width": tile_width,
+               "maze_name": maze_name,
                "mode": "demo"}
     template = "demo/demo.html"
     return render(request, template, {"ctx": context})
-
-
-def UIST_Demo(request):
-    return demo(request, "March20_the_ville_n25_UIST_RUN-step-1-141", 2160, play_speed="3")
 
 
 def home(request):
@@ -128,43 +127,27 @@ def home(request):
     with open(f_curr_step) as json_file:
         step = json.load(json_file)["step"]
 
-    os.remove(f_curr_step)
+    # os.remove(f_curr_step)
 
-    persona_names = []
-    persona_names_set = set()
-    for i in find_filenames(f"storage/{sim_code}/personas", ""):
-        p = i.split("/")[-1].strip()
-        if p[0] != ".":
-            persona_names += [{"original": p,
-                               "underscore": p.replace(" ", "_"),
-                               "initial": p[0] + p.split(" ")[-1][0]}]
-            persona_names_set.add(p)
-
-    persona_init_pos = dict()
-    file_count = []
-    for i in find_filenames(f"storage/{sim_code}/environment", ".json"):
-        x = i.split("/")[-1].strip()
-        if x[0] != ".":
-            file_count += [int(x.split(".")[0])]
-    curr_json = f'storage/{sim_code}/environment/{str(max(file_count))}.json'
-    with open(curr_json) as json_file:
-        persona_init_pos_dict = json.load(json_file)
-        for key, val in persona_init_pos_dict.items():
-            if key in persona_names_set:
-                persona_init_pos[key.replace(" ", "_")] = [val["x"], val["y"]]
-
-    context = {"sim_code": sim_code,
-               "step": step,
-               "persona_names": persona_names,
-               "persona_init_pos": json.dumps(persona_init_pos),
-               "mode": "simulate"}
     template = "home/home.html"
-    return render(request, template, {"ctx": context})
+    return home_render(request, template, sim_code=sim_code, step=int(step), mode="simulate")
 
 
 def replay(request, sim_code, step):
-    sim_code = sim_code
-    step = int(step)
+    template = "home/home.html"
+    return home_render(request, template, sim_code=sim_code, step=int(step), mode="replay")
+
+
+def home_render(request, template, *args, **kwargs):
+    sim_code = kwargs.get("sim_code", "the_ville")
+    step = kwargs.get("step", 0)
+    mode = kwargs.get("mode", "tester")
+    meta_file = f"storage/{sim_code}/reverie/meta.json"
+
+    with open(meta_file) as json_file:
+        maze_name = json.load(json_file)["maze_name"]
+    with open(maze_meta_file % maze_name) as json_file:
+        tile_width = int(json.load(json_file)["sq_tile_size"])
 
     persona_names = []
     persona_names_set = set()
@@ -177,12 +160,7 @@ def replay(request, sim_code, step):
             persona_names_set.add(p)
 
     persona_init_pos = dict()
-    file_count = []
-    for i in find_filenames(f"storage/{sim_code}/environment", ".json"):
-        x = i.split("/")[-1].strip()
-        if x[0] != ".":
-            file_count += [int(x.split(".")[0])]
-    curr_json = f'storage/{sim_code}/environment/{str(max(file_count))}.json'
+    curr_json = f'storage/{sim_code}/environment/{step}.json'
     with open(curr_json) as json_file:
         persona_init_pos_dict = json.load(json_file)
         for key, val in persona_init_pos_dict.items():
@@ -193,8 +171,9 @@ def replay(request, sim_code, step):
                "step": step,
                "persona_names": persona_names,
                "persona_init_pos": json.dumps(persona_init_pos),
-               "mode": "replay"}
-    template = "home/home.html"
+               "tile_width": tile_width,
+               "maze_name": maze_name,
+               "mode": mode}
     return render(request, template, {"ctx": context})
 
 
@@ -203,7 +182,7 @@ def replay_persona_state(request, sim_code, step, persona_name):
     step = int(step)
 
     persona_name_underscore = persona_name
-    persona_name = " ".join(persona_name.split("_"))
+    persona_name = persona_name.replace("_", " ")
     memory = f"storage/{sim_code}/personas/{persona_name}/bootstrap_memory"
     if not os.path.exists(memory):
         memory = f"compressed_storage/{sim_code}/personas/{persona_name}/bootstrap_memory"
@@ -263,9 +242,6 @@ def process_environment(request):
     RETURNS:
         HttpResponse: string confirmation message.
     """
-    # f_curr_sim_code = "temp_storage/curr_sim_code.json"
-    # with open(f_curr_sim_code) as json_file:
-    #     sim_code = json.load(json_file)["sim_code"]
 
     data = json.loads(request.body)
     step = data["step"]
@@ -291,9 +267,6 @@ def update_environment(request):
     RETURNS:
         HttpResponse
     """
-    # f_curr_sim_code = "temp_storage/curr_sim_code.json"
-    # with open(f_curr_sim_code) as json_file:
-    #     sim_code = json.load(json_file)["sim_code"]
 
     data = json.loads(request.body)
     step = data["step"]
