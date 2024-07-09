@@ -21,7 +21,7 @@
 				<h2><span id="game-time-content"></span></h2>
 			</div>
 			<div class="col-md-4">
-				<h2 style="text-align: right; {% if mode == 'simulate' %} display: none {% endif %}">
+				<h2 style="text-align: right; {% if ctx.mode == 'simulate' %} display: none {% endif %}">
 					<button id="play_button" type="button" class="btn btn-default">
 						<strong style=" font-size:1.2em"><i class="glyphicon glyphicon-play"></i> &nbsp;Play</strong>
 					</button>
@@ -39,7 +39,7 @@
 		<div class="row">
 			<div class="col-md-12" style="border:solid; padding:2em; border-radius: 15px">
 				<div class="row" style="">
-					{% for p in persona_names %}
+					{% for p in ctx.persona_names %}
 						<div class="col-md-2 col-sm-2" style="text-align:center; margin-bottom:0.8em;">
 							<a href="#" id="on_screen_det_trigger-{{ p.underscore }}">
 								<div class="row" style="padding:0">
@@ -69,7 +69,7 @@
 		</div>
 
 
-		{% for p in persona_names %}
+		{% for p in ctx.persona_names %}
 			<div class="media" id="on_screen_det_content-{{ p.underscore }}" style="background-color:#EEEEEE; padding:1em; padding-left:3.5em; padding-right:2em; border-radius:10px; display: none;">
 				<div class="media-left media-middle">
 					<a href="#">
@@ -82,7 +82,7 @@
 					<div class="row">
 						<h2 class="col-md-8" id="name__{{ p.underscore }}" style="margin-bottom:0.8em; font-size:1.85em; ">
 							{{ p.original }} &nbsp;&nbsp;
-							<a href="{% url 'replay_persona_state' sim_code step p.underscore %}" style="font-size:0.6em">State Details</a>
+							<a href="{% url 'replay_persona_state' ctx.sim_code ctx.step p.underscore %}" style="font-size:0.6em">State Details</a>
 						</h2>
 					</div>
 					<div style="">
@@ -96,7 +96,7 @@
 	</div>
 </div>
 <div style="margin-top:10em"></div>
-<div style="display: " id="temp_focus"></div>
+<div style="display: none;" id="temp_focus"></div>
 
 {% endblock content %}
 
@@ -104,14 +104,14 @@
 {% block js_content %}
 
 <script src='https://cdn.jsdelivr.net/npm/phaser@3.55.2/dist/phaser.js'></script>
-{% include 'demo/main_script.html' %}
+{% include 'main_script.html' %}
 <script>
-	{% for p in persona_names %}
+	{% for p in ctx.persona_names %}
 		$('#on_screen_det_trigger-{{ p.underscore }}').click(function () {
 			$('#on_screen_det_content-init').css({
 				'display': 'none',
 			});
-			{% for p_i in persona_names %}
+			{% for p_i in ctx.persona_names %}
 				$('#on_screen_det_content-{{ p_i.underscore }}').css({
 					'display': 'none',
 				});

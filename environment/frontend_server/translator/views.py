@@ -1,5 +1,6 @@
 """
 Author: Joon Sung Park (joonspk@stanford.edu)
+Modified: Joon Hee Kim (rlawnsgl191@gmail.com)
 File: views.py
 """
 
@@ -62,7 +63,6 @@ def demo(request, sim_code, step, play_speed="2"):
         raw_all_movement = json.load(json_file)
 
     # Loading all names of the personas
-    persona_names = dict()
     persona_names = []
     persona_names_set = set()
     for p in list(raw_all_movement["0"].keys()):
@@ -106,7 +106,7 @@ def demo(request, sim_code, step, play_speed="2"):
                "play_speed": play_speed,
                "mode": "demo"}
     template = "demo/demo.html"
-    return render(request, template, context)
+    return render(request, template, {"ctx": context})
 
 
 def UIST_Demo(request):
@@ -133,12 +133,14 @@ def home(request):
     persona_names = []
     persona_names_set = set()
     for i in find_filenames(f"storage/{sim_code}/personas", ""):
-        x = i.split("/")[-1].strip()
-        if x[0] != ".":
-            persona_names += [[x, x.replace(" ", "_")]]
-            persona_names_set.add(x)
+        p = i.split("/")[-1].strip()
+        if p[0] != ".":
+            persona_names += [{"original": p,
+                               "underscore": p.replace(" ", "_"),
+                               "initial": p[0] + p.split(" ")[-1][0]}]
+            persona_names_set.add(p)
 
-    persona_init_pos = []
+    persona_init_pos = dict()
     file_count = []
     for i in find_filenames(f"storage/{sim_code}/environment", ".json"):
         x = i.split("/")[-1].strip()
@@ -149,15 +151,15 @@ def home(request):
         persona_init_pos_dict = json.load(json_file)
         for key, val in persona_init_pos_dict.items():
             if key in persona_names_set:
-                persona_init_pos += [[key, val["x"], val["y"]]]
+                persona_init_pos[key.replace(" ", "_")] = [val["x"], val["y"]]
 
     context = {"sim_code": sim_code,
                "step": step,
                "persona_names": persona_names,
-               "persona_init_pos": persona_init_pos,
+               "persona_init_pos": json.dumps(persona_init_pos),
                "mode": "simulate"}
     template = "home/home.html"
-    return render(request, template, context)
+    return render(request, template, {"ctx": context})
 
 
 def replay(request, sim_code, step):
@@ -167,12 +169,14 @@ def replay(request, sim_code, step):
     persona_names = []
     persona_names_set = set()
     for i in find_filenames(f"storage/{sim_code}/personas", ""):
-        x = i.split("/")[-1].strip()
-        if x[0] != ".":
-            persona_names += [[x, x.replace(" ", "_")]]
-            persona_names_set.add(x)
+        p = i.split("/")[-1].strip()
+        if p[0] != ".":
+            persona_names += [{"original": p,
+                               "underscore": p.replace(" ", "_"),
+                               "initial": p[0] + p.split(" ")[-1][0]}]
+            persona_names_set.add(p)
 
-    persona_init_pos = []
+    persona_init_pos = dict()
     file_count = []
     for i in find_filenames(f"storage/{sim_code}/environment", ".json"):
         x = i.split("/")[-1].strip()
@@ -183,15 +187,15 @@ def replay(request, sim_code, step):
         persona_init_pos_dict = json.load(json_file)
         for key, val in persona_init_pos_dict.items():
             if key in persona_names_set:
-                persona_init_pos += [[key, val["x"], val["y"]]]
+                persona_init_pos[key.replace(" ", "_")] = [val["x"], val["y"]]
 
     context = {"sim_code": sim_code,
                "step": step,
                "persona_names": persona_names,
-               "persona_init_pos": persona_init_pos,
+               "persona_init_pos": json.dumps(persona_init_pos),
                "mode": "replay"}
     template = "home/home.html"
-    return render(request, template, context)
+    return render(request, template, {"ctx": context})
 
 
 def replay_persona_state(request, sim_code, step, persona_name):
@@ -242,9 +246,9 @@ def replay_persona_state(request, sim_code, step, persona_name):
 
 
 def path_tester(request):
-    context = {}
+    context = {"mode": "tester"}
     template = "path_tester/path_tester.html"
-    return render(request, template, context)
+    return render(request, template, {"ctx": context})
 
 
 def process_environment(request):

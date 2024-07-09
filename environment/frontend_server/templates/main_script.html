@@ -1,0 +1,11 @@
+{% load staticfiles %}
+
+<script type="text/javascript">
+	const game = main({
+		...{{ ctx | safe }},
+		static: "{% static '' %}",
+		path_tester_update: "{% url 'path_tester_update' %}",
+		update_environment: "{% url 'update_environment' %}",
+		process_environment: "{% url 'process_environment' %}",
+	});
+</script>
