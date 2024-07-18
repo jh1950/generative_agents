@@ -125,6 +125,12 @@ const main = function({
 	let play_button = document.getElementById("play_button");
 	let pause_button = document.getElementById("pause_button");
 
+	// interiors_pt01 ~ interiors_pt17
+	let interiors = [];
+	for (let i=1; i<=17; i++) { // pt01 ~ pt17
+		interiors.push("interiors_pt" + ("0"+i).slice(-2));
+	}
+
 
 	// ###########################################################################
 	// ENGINE
@@ -158,11 +164,9 @@ const main = function({
 		//       sure to check the "embedded" option.
 		this.load.image("blocks_1", static + "assets/the_ville/visuals/map_assets/blocks/blocks_1.png");
 		this.load.image("walls", static + "assets/the_ville/visuals/map_assets/v1/Room_Builder_32x32.png");
-		this.load.image("interiors_pt1", static + "assets/the_ville/visuals/map_assets/v1/interiors_pt1.png");
-		this.load.image("interiors_pt2", static + "assets/the_ville/visuals/map_assets/v1/interiors_pt2.png");
-		this.load.image("interiors_pt3", static + "assets/the_ville/visuals/map_assets/v1/interiors_pt3.png");
-		this.load.image("interiors_pt4", static + "assets/the_ville/visuals/map_assets/v1/interiors_pt4.png");
-		this.load.image("interiors_pt5", static + "assets/the_ville/visuals/map_assets/v1/interiors_pt5.png");
+		for (let interior of interiors) { // load: interiors pt01 ~ pt17
+			this.load.image(interior, static + `assets/maps/map_assets/v1/${interior}.png`);
+		}
 		this.load.image("CuteRPG_Field_B", static + "assets/the_ville/visuals/map_assets/cute_rpg_word_VXAce/tilesets/CuteRPG_Field_B.png");
 		this.load.image("CuteRPG_Field_C", static + "assets/the_ville/visuals/map_assets/cute_rpg_word_VXAce/tilesets/CuteRPG_Field_C.png");
 		this.load.image("CuteRPG_Harbor_C", static + "assets/the_ville/visuals/map_assets/cute_rpg_word_VXAce/tilesets/CuteRPG_Harbor_C.png");
@@ -224,11 +228,10 @@ const main = function({
 		//       matches.
 		const collisions = map.addTilesetImage("blocks", "blocks_1");
 		const walls = map.addTilesetImage("Room_Builder_32x32", "walls");
-		const interiors_pt1 = map.addTilesetImage("interiors_pt1", "interiors_pt1");
-		const interiors_pt2 = map.addTilesetImage("interiors_pt2", "interiors_pt2");
-		const interiors_pt3 = map.addTilesetImage("interiors_pt3", "interiors_pt3");
-		const interiors_pt4 = map.addTilesetImage("interiors_pt4", "interiors_pt4");
-		const interiors_pt5 = map.addTilesetImage("interiors_pt5", "interiors_pt5");
+		for (let i in interiors) { // interiors pt01 ~ pt17
+			let interior = interiors[i];
+			interiors[i] = map.addTilesetImage(interior, interior);
+		}
 		const CuteRPG_Field_B = map.addTilesetImage("CuteRPG_Field_B", "CuteRPG_Field_B");
 		const CuteRPG_Field_C = map.addTilesetImage("CuteRPG_Field_C", "CuteRPG_Field_C");
 		const CuteRPG_Harbor_C = map.addTilesetImage("CuteRPG_Harbor_C", "CuteRPG_Harbor_C");
@@ -249,7 +252,7 @@ const main = function({
 		let tileset_group_1 = [
 			CuteRPG_Field_B, CuteRPG_Field_C, CuteRPG_Harbor_C, CuteRPG_Village_B,
 			CuteRPG_Forest_B, CuteRPG_Desert_C, CuteRPG_Mountains_B, CuteRPG_Desert_B, CuteRPG_Forest_C,
-			interiors_pt1, interiors_pt2, interiors_pt3, interiors_pt4, interiors_pt5, walls
+			...interiors, walls,
 		];
 		const bottomGroundLayer = map.createLayer("Bottom Ground", tileset_group_1, 0, 0);
 		const exteriorGroundLayer = map.createLayer("Exterior Ground", tileset_group_1, 0, 0);
