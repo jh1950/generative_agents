@@ -28,6 +28,9 @@ def landing(request):
 
     for mode, sim_codes in context.items():
         for i, sim_code in enumerate(sim_codes):
+            if sim_code.startswith("."):
+                context[mode].pop(i)
+                continue
             with open(meta_files[mode] % sim_code) as f:
                 max_step = int(json.load(f)["step"])
             context[mode][i] = [sim_code, max_step-1]
