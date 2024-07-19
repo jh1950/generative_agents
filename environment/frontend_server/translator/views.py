@@ -18,8 +18,8 @@ maze_meta_file = "static_dirs/assets/%s/matrix/maze_meta_info.json"
 
 def landing(request):
     context = {
-        "demo": sorted(os.listdir("compressed_storage")),
-        "replay": sorted(os.listdir("storage")),
+        "demo": os.listdir("compressed_storage"),
+        "replay": os.listdir("storage"),
     }
     meta_files = {
         "demo": "compressed_storage/%s/meta.json",
@@ -27,10 +27,8 @@ def landing(request):
     }
 
     for mode, sim_codes in context.items():
-        for i, sim_code in enumerate(sim_codes):
-            if sim_code.startswith("."):
-                context[mode].pop(i)
-                continue
+        context[mode] = sorted(filter(lambda x: not x.startswith("."), sim_codes))
+        for i, sim_code in enumerate(context[mode]):
             with open(meta_files[mode] % sim_code) as f:
                 max_step = int(json.load(f)["step"])
             context[mode][i] = [sim_code, max_step-1]

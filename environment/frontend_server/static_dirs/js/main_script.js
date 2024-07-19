@@ -11,6 +11,9 @@ const main = function({
 	start_datetime="",
 	maze_name="the_ville",
 	tile_width=32,
+	map_width=90,
+	map_height=70,
+	player_width=40,
 	static="/static/",
 	path_tester_update="/",
 	update_environment="/",
@@ -45,10 +48,11 @@ const main = function({
 	// Phaser 3.0 global settings.
 	// Configuration meant to be passed to the main Phaser game instance.
 	const canvas_width = Math.min(1500, document.querySelector("#game-container").clientWidth);
+	const canvas_height = canvas_width * 9/16;
 	const config = {
 		type: Phaser.AUTO,
 		width: canvas_width,
-		height: canvas_width * 9/16,
+		height: canvas_height,
 		parent: "game-container",
 		pixelArt: true,
 		physics: {
@@ -86,8 +90,8 @@ const main = function({
 	if (typeof persona_init_pos === "string") persona_init_pos = JSON.parse(persona_init_pos);
 
 	let personas = {};
-	let pronunciatios = {};
 	let speech_bubbles = {};
+	let pronunciatios = {};
 	let anims_direction;
 	let pre_anims_direction;
 	let pre_anims_direction_dict = {};
@@ -120,6 +124,23 @@ const main = function({
 		start_datetime = new Date(Date.parse(start_datetime));
 		document.getElementById("game-time-content").innerHTML = start_datetime.toLocaleTimeString("en-US", datetime_options);
 	}
+
+
+	const offsets = {
+		"persona": [
+			tile_width / 2,
+			(player_width - tile_width)/-2,
+		],
+		"speech_bubble": [
+			80,
+			-39,
+		],
+		"pronunciatio": [
+			0,
+			0,
+		],
+	};
+
 
 	// Control button binders
 	let play_button = document.getElementById("play_button");
@@ -165,7 +186,7 @@ const main = function({
 		this.load.image("blocks_1", static + "assets/the_ville/visuals/map_assets/blocks/blocks_1.png");
 		this.load.image("walls", static + "assets/the_ville/visuals/map_assets/v1/Room_Builder_32x32.png");
 		for (let interior of interiors) { // load: interiors pt01 ~ pt17
-			this.load.image(interior, static + `assets/maps/map_assets/v1/${interior}.png`);
+			this.load.image(interior, static + `assets/the_ville/visuals/map_assets/v1/${interior}.png`);
 		}
 		this.load.image("CuteRPG_Field_B", static + "assets/the_ville/visuals/map_assets/cute_rpg_word_VXAce/tilesets/CuteRPG_Field_B.png");
 		this.load.image("CuteRPG_Field_C", static + "assets/the_ville/visuals/map_assets/cute_rpg_word_VXAce/tilesets/CuteRPG_Field_C.png");
@@ -261,7 +282,7 @@ const main = function({
 		const interiorGroundLayer = map.createLayer("Interior Ground", tileset_group_1, 0, 0);
 		const wallLayer = map.createLayer("Wall", [CuteRPG_Field_C, walls], 0, 0);
 		const interiorFurnitureL1Layer = map.createLayer("Interior Furniture L1", tileset_group_1, 0, 0);
-		const interiorFurnitureL2Layer = map.createLayer("Interior Furniture L2 ", tileset_group_1, 0, 0);
+		const interiorFurnitureL2Layer = map.createLayer("Interior Furniture L2", tileset_group_1, 0, 0);
 		const foregroundL1Layer = map.createLayer("Foreground L1", tileset_group_1, 0, 0);
 		const foregroundL2Layer = map.createLayer("Foreground L2", tileset_group_1, 0, 0);
 
@@ -297,7 +318,7 @@ const main = function({
 		// OLD NOTE: Create a sprite with physics enabled via the physics system.
 		// The image  used for the sprite has a bit of whitespace, so I'm using
 		// setSize & setOffset to control the size of the player's body.
-		player = this.physics.add.sprite(2400, 588, "atlas", "misa-front").setSize(30, 40).setOffset(0, 0);
+		player = this.physics.add.sprite(map_width*32/2, map_height*32/2, "atlas", "misa-front").setSize(30, 40).setOffset(0, 0);
 		player.setDepth(playerDepth);
 		// Setting up the camera.
 		const camera = this.cameras.main;
@@ -334,23 +355,23 @@ const main = function({
 		for (let i=0; i<Object.keys(persona_init_pos).length; i++) {
 			let persona_name = Object.keys(persona_init_pos)[i];
 			let start_pos = [
-				persona_init_pos[persona_name][0] * tile_width + tile_width / 2,
-				persona_init_pos[persona_name][1] * tile_width + tile_width,
+				persona_init_pos[persona_name][0] * tile_width + offsets["persona"][0],
+				persona_init_pos[persona_name][1] * tile_width + offsets["persona"][1],
 			];
 			let new_sprite = this.physics.add.sprite(start_pos[0], start_pos[1], persona_name, "down").setSize(30, 40).setOffset(0, 16);
 			// Scale up the sprite
-			new_sprite.displayWidth = 40;
+			new_sprite.displayWidth = player_width;
 			new_sprite.scaleY = new_sprite.scaleX;
 
 			// Here, we are creating the persona and its pronunciatio sprites.
 			personas[persona_name] = new_sprite;
-			speech_bubbles[persona_name] = this.add.image(new_sprite.body.x - 0, new_sprite.body.y - 30, 'speech_bubble').setDepth(3);
+			speech_bubbles[persona_name] = this.add.image(new_sprite.body.x + offsets["speech_bubble"][0], new_sprite.body.y + offsets["speech_bubble"][1], 'speech_bubble').setDepth(3);
 			speech_bubbles[persona_name].displayWidth = 140;
 			speech_bubbles[persona_name].displayHeight = 58;
 
 			pronunciatios[persona_name] = this.add.text(
-				new_sprite.body.x - 6,
-				new_sprite.body.y - 42 - 16,
+				speech_bubbles[persona_name].x - speech_bubbles[persona_name].displayWidth/2 + offsets["pronunciatio"][0],
+				speech_bubbles[persona_name].y - speech_bubbles[persona_name].displayHeight/2 + offsets["pronunciatio"][1],
 				"🦁", {
 					font: "24px monospace",
 					fill: "#000000",
@@ -429,7 +450,7 @@ const main = function({
 
 		// Run a separate function for each mode
 		if (mode in updates) {
-			updates[mode]();
+			// updates[mode]();
 		}
 	}
 
@@ -547,8 +568,8 @@ const main = function({
 			let curr_persona_name_os = Object.keys(personas)[i];
 			let curr_persona_name = curr_persona_name_os.replace(/_/g, " ");
 			let curr_persona = personas[curr_persona_name_os];
-			let curr_pronunciatio = pronunciatios[Object.keys(personas)[i]];
-			let curr_speech_bubble = speech_bubbles[Object.keys(personas)[i]];
+			let curr_speech_bubble = speech_bubbles[curr_persona_name_os];
+			let curr_pronunciatio = pronunciatios[curr_persona_name_os];
 
 			let p_movement = movements[curr_persona_name];
 			if (p_movement) {
@@ -590,7 +611,7 @@ const main = function({
 				}
 
 				if (execute_count > 0) {
-					if (!animation.start(curr_persona, curr_pronunciatio, curr_speech_bubble, curr_persona_name_os)) {
+					if (!animation.start(curr_persona, curr_speech_bubble, curr_pronunciatio, curr_persona_name_os)) {
 						animation.stop(curr_persona, curr_persona_name_os);
 					};
 				} else if (mode != "demo") {
@@ -645,7 +666,7 @@ const main = function({
 
 
 	const animation = {
-		start: function(curr_persona, curr_pronunciatio, curr_speech_bubble, p_name_os) {
+		start: function(curr_persona, curr_speech_bubble, curr_pronunciatio, p_name_os) {
 			if (curr_persona.body.x < movement_target[p_name_os][0]) {
 				curr_persona.body.x += movement_speed;
 				anims_direction = "r";
@@ -670,10 +691,10 @@ const main = function({
 				anims_direction = "";
 			}
 
-			curr_pronunciatio.x = curr_persona.body.x + 18;
-			curr_pronunciatio.y = curr_persona.body.y - 42 - 28;
-			curr_speech_bubble.x = curr_persona.body.x + 80;
-			curr_speech_bubble.y = curr_persona.body.y - 39;
+			curr_speech_bubble.x = curr_persona.body.x + offset["speech_bubble"][0];
+			curr_speech_bubble.y = curr_persona.body.y + offset["speech_bubble"][1];
+			curr_pronunciatio.x = curr_speech_bubble.x + offset["pronunciatio"][0];
+			curr_pronunciatio.y = curr_speech_bubble.y + offset["pronunciatio"][1];
 
 			let left_walk_name = p_name_os + "-left-walk";
 			let right_walk_name = p_name_os + "-right-walk";

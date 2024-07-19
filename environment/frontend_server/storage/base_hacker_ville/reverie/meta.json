@@ -1,0 +1,13 @@
+{
+  "fork_sim_code": "base_hacker_ville",
+  "start_date": "July 19, 2024",
+  "curr_time": "July 19, 2024, 00:00:00",
+  "sec_per_step": 10,
+  "maze_name": "the_ville",
+  "persona_names": [
+    "Arthur Burton",
+    "Isabella Rodriguez",
+    "Yuriko Yamamoto"
+  ],
+  "step": 0
+}
